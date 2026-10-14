@@ -28,6 +28,12 @@ For the `sourceUrl` method, no ETAPI token is required — the script is created
 ## Features
 
 - **Install** scripts/widgets from a remote or local registry with one click
+- **Search & sort** — filter by name, author, description or tag; sort by name, updates first or installed first
+- **Registry validation** — entries with an invalid schema are flagged and skipped instead of breaking the list
+- **Compatibility check** — an entry's `minAppVersion` blocks installing it on an older Trilium
+- **Changelog** — optional `changelog` field shown on the card
+- **Install warning** — a confirmation shows the source and warns that installed code runs with full API access
+- **Host allowlist** — downloads are limited to `raw.githubusercontent.com` and `github.com`, over HTTPS
 - **Update detection** — cards turn yellow when a newer version is available
 - **Uninstall** — removes the script note cleanly
 - **Remote registry** with automatic fallback to local note content
@@ -102,6 +108,8 @@ Create a public [GitHub Gist](https://gist.github.com) with a `registry.json` fi
 | `id` | ✅ | Unique identifier — used to track installation state |
 | `name` | ✅ | Display name shown in the UI |
 | `version` | ✅ | Semver string (`1.0.0`) |
+| `minAppVersion` | | Minimum Trilium version required (`0.105.0`) — install is blocked on older apps |
+| `changelog` | | Short "what's new" text shown on the card |
 | `author` | | Author name |
 | `description` | | Short card description |
 | `tags` | | Array of tag strings |
@@ -112,6 +120,8 @@ Create a public [GitHub Gist](https://gist.github.com) with a `registry.json` fi
 | `zipUrl` | | Legacy URL to a Trilium export ZIP |
 
 At least one of `sourceUrl`, `manifestUrl` or `zipUrl` must be provided.
+
+Entries that fail schema validation — missing `id`/`name`/`version`, no URL at all, a non-`http(s)` URL, a `sourceUrl`/`manifestUrl` not hosted on `raw.githubusercontent.com`, a duplicate `id`, or a malformed `minAppVersion` — are listed in a warning panel and skipped instead of breaking the list. The same rules run as smoke tests — `bash test/run.sh`.
 
 ---
 
@@ -207,6 +217,9 @@ On every load, the manager compares the `version` field in the registry against 
 | `trilium-plugin-manager-v4.js` | **Main file** — paste into a JS Frontend note |
 | `trilium-plugin-manager-v4.html` | Legacy HTML version (kept for reference) |
 | `registry.json` | Example registry with official scripts |
+| `test/registry-smoke.js` | Smoke test — validates `registry.json` schema |
+| `test/manager-logic-smoke.js` | Smoke test — exercises the manager's logic with DOM stubs |
+| `test/run.sh` | Runs `node --check` + both smoke tests (`bash test/run.sh`) |
 | `PLUGIN_DEV_GUIDE.md` | Guide for creating and publishing scripts |
 | `MANIFEST_GENERATOR.md` | Fill-in-the-blank prompt to generate manifest.json |
 
@@ -214,9 +227,10 @@ On every load, the manager compares the `version` field in the registry against 
 
 ## Roadmap
 
-- [ ] Script changelog field
+- [x] Script changelog field (`changelog` on the registry entry)
 - [ ] Startup update badge
 - [ ] One-click "Export as script" helper note
+- [ ] Integrity check (`sha256` per entry) for downloaded sources — currently blocked by the script sandbox (no `crypto` module available)
 
 ---
 

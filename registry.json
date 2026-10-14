@@ -1,5 +1,6 @@
 {
   "meta": {
+    "schemaVersion": 1,
     "name": "TriliumNext Plugins — Official Registry",
     "author": "ricolandia",
     "description": "Personal plugin registry for TriliumNext Plugin Manager.",
@@ -12,6 +13,7 @@
       "name": "Weekly Planner",
       "description": "Simple Weekly planning board with Monday–Sunday columns.",
       "version": "0.1.9",
+      "minAppVersion": "0.106.0",
       "author": "ecodiv",
       "homepage": "https://github.com/ecodiv/Trilium_scripts",
       "tags": [
@@ -26,6 +28,8 @@
       "name": "Weekly Planner (Editor)",
       "description": "Weekly planning board with backlog and day columns, plus Month and Gantt views, recurrence, drag-and-drop and a mobile layout. Original version by ricolandia.",
       "version": "0.9.0",
+      "minAppVersion": "0.106.0",
+      "changelog": "Datas locais (fim do deslocamento UTC), recorrências persistidas com travas #total/#every/#upto, scan global tolerante a falhas, teclado completo e i18n PT/EN.",
       "author": "ricolandia",
       "homepage": "https://github.com/ricolandia/TriliumNext-Toolkit/tree/main/Weekly-Planner",
       "tags": [
@@ -40,6 +44,8 @@
       "name": "Canvas Note Tools",
       "description": "Canvas toolkit for TriliumNext: note cards with in-place editing, relation types per arrow, longform synthesis, layered flowcharts from a text DSL (no arrows), #canvasTemplate insertion and built-in help. UI follows Trilium's language (PT/EN).",
       "version": "0.9.0",
+      "minAppVersion": "0.106.0",
+      "changelog": "Rótulo da seta corrigido, groupIds remapeado no clone de template, JSON corrompido nunca é sobrescrito, editor com role=dialog + Esc, confirmações em 2 toques, launcher mobile com ARIA.",
       "author": "ricolandia",
       "homepage": "https://github.com/ricolandia/TriliumNext-Toolkit/tree/main/Canvas-Note-Tools",
       "tags": [
@@ -65,6 +71,7 @@
       "name": "Canvas Templates For Production",
       "description": "A collection of Excalidraw templates for productivity, learning, and creativity. Ideal for use with Canvas Note Tools (Insert template).",
       "version": "0.8.0",
+      "minAppVersion": "0.106.0",
       "author": "ricolandia",
       "homepage": "https://github.com/ricolandia/TriliumNext-Toolkit",
       "tags": [
@@ -79,6 +86,8 @@
       "name": "FountainRenderer",
       "description": "Renders screenplay scripts written in Fountain directly inside TriliumNext. Supports scenes, action lines, dialogue, characters, and panel descriptions.",
       "version": "0.9.0",
+      "minAppVersion": "0.106.0",
+      "changelog": "Fim da injeção em atributo (escaparHtml), atalhos escopados (não sequestram o zoom do Trilium), boneyard fora das estatísticas/PDF, sidebar e zoom/foco mantidos, i18n PT/EN.",
       "author": "ricolandia",
       "homepage": "https://github.com/ricolandia/TriliumNext-Toolkit/tree/main/Writers-Tools",
       "tags": [
@@ -95,6 +104,8 @@
       "name": "Longform Compiler",
       "description": "Aggregates a subtree of notes into a single compiled document. Useful for book manuscripts, academic articles, and any long-form writing split across multiple notes.",
       "version": "0.9.0",
+      "minAppVersion": "0.106.0",
+      "changelog": "Compilado sanitizado, ordem salva com toast só quando muda, cards com teclado (Enter abre) + botões ↑/↓, erros visíveis com retry, i18n PT/EN.",
       "author": "ricolandia",
       "homepage": "https://github.com/ricolandia/TriliumNext-Toolkit/tree/main/Writers-Tools",
       "tags": [
@@ -110,6 +121,8 @@
       "name": "AI Chat (OpenRouter)",
       "description": "Inline AI chat widget for any OpenAI-compatible provider (api_base), OpenRouter included. Conversation history, configurable system prompt and context from the current note.",
       "version": "0.9.0",
+      "minAppVersion": "0.106.0",
+      "changelog": "Config encontrada pelo label #aiChatConfig (instalação nova deixa de nascer quebrada), renderização fail-closed, AbortController por operação, CSS escopado, i18n PT/EN (85 chaves).",
       "author": "ricolandia",
       "homepage": "https://github.com/ricolandia/TriliumNext-Toolkit/tree/main/AI-Chat",
       "tags": [
@@ -126,6 +139,8 @@
       "name": "Minimalist Pomodoro and Time Tracker",
       "description": "A monochromatic Pomodoro timer widget with per-note time tracking and automated report generation. Built with zero external dependencies.",
       "version": "0.9.0",
+      "minAppVersion": "0.106.0",
+      "changelog": "STOP só limpa a sessão com o relatório salvo, fim da inflação offline, relatório em tabela HTML com títulos escapados, recarga retoma a sessão, a11y completa, i18n PT/EN (30 chaves).",
       "author": "ricolandia",
       "homepage": "https://github.com/ricolandia/TriliumNext-Toolkit/tree/main/Minimalist-Pomodoro",
       "tags": [
@@ -147,6 +162,7 @@
       "name": "Attribute Garbage Collector",
       "description": "Scans all notes in your TriliumNext database for broken relations, unused labels, rare attributes, and near-duplicate names. Preview and batch-delete them — deletions persist.",
       "version": "0.8.3",
+      "minAppVersion": "0.106.0",
       "author": "ricolandia",
       "homepage": "https://github.com/ricolandia/TriliumNext-Toolkit/tree/main/Attribute-Garbage-Collector",
       "tags": [
@@ -170,6 +186,8 @@
       "name": "Shared Notes",
       "description": "Share notes between TriliumNext instances via invite strings: multi-reply threads, versioned snapshots, bidirectional replies with a return channel, endpoint validation and a bilingual UI (PT/EN) that follows the interface language.",
       "version": "0.11.0",
+      "minAppVersion": "0.106.0",
+      "changelog": "Envio marca snSent só em respostas confirmadas; handler blindado contra entradas hostis (409/410); fetch com redirect:'error' e teto de 1 MB; i18n 70 chaves; E2E real em 2 instâncias.",
       "author": "ricolandia",
       "homepage": "https://github.com/ricolandia/TriliumNext-Toolkit/tree/main/Shared-Notes",
       "tags": [
@@ -183,6 +201,7 @@
       "name": "Knowledge Dashboard",
       "description": "Full-page dashboard that audits your knowledge base for orphan notes, stubs, empty notes, old TODOs, abandoned notes, PDFs — plus a Dataview-like custom SQL query builder.",
       "version": "0.8.1",
+      "minAppVersion": "0.106.0",
       "author": "ricolandia",
       "homepage": "https://github.com/ricolandia/TriliumNext-Toolkit/tree/main/Knowledge-Debt-Dashboard",
       "tags": [
@@ -196,6 +215,7 @@
       "name": "Kanboard Integration",
       "description": "Kanboard integration via JSON-RPC API. Syncs projects, columns and tasks.",
       "version": "0.8.0",
+      "minAppVersion": "0.106.0",
       "author": "ricolandia",
       "homepage": "https://github.com/ricolandia/TriliumNext-Toolkit/tree/main/Kanboard-Integration",
       "tags": [
@@ -209,6 +229,8 @@
       "name": "Word Counter",
       "description": "A compact right-pane panel showing word and character counts for the current note, alongside daily and weekly progress goals (baseline + delta semantics).",
       "version": "0.9.0",
+      "minAppVersion": "0.106.0",
+      "changelog": "Semântica baseline + delta (mede palavras escritas de verdade), contagem com entidades corrigida, storage v2 com migração e poda, barras com contraste corrigido + ARIA, i18n PT/EN.",
       "author": "ricolandia",
       "homepage": "https://github.com/ricolandia/TriliumNext-Toolkit/tree/main/Word-Counter",
       "tags": [
@@ -230,6 +252,8 @@
       "name": "Daily Note Navigator",
       "description": "Right-pane widget to navigate daily journal notes (days and month jumps) with read-only navigation and an explicit create note action.",
       "version": "0.9.0",
+      "minAppVersion": "0.106.0",
+      "changelog": "Navegação read-only com ação \"Criar nota\" (fim da criação silenciosa), teclado escopado ao widget, datas locais com clamp de mês, i18n PT/EN (15 chaves).",
       "author": "ricolandia",
       "homepage": "https://github.com/ricolandia/TriliumNext-Toolkit/tree/main/Daily-Note-Navigator",
       "tags": [
@@ -251,6 +275,7 @@
       "name": "Mastodon Sender",
       "description": "Compose and post toots directly from TriliumNext with visibility control, content warnings, and current note support.",
       "version": "0.8.0",
+      "minAppVersion": "0.106.0",
       "author": "ricolandia",
       "homepage": "https://github.com/ricolandia/TriliumNext-Toolkit/tree/main/Mastodon-Sender",
       "tags": [

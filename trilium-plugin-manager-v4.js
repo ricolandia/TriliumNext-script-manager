@@ -333,6 +333,112 @@ const PM_CSS = `
     margin-right: 4px;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Toolbar: busca + ordenação ── */
+#pm-root .toolbar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+#pm-root .pm-search {
+    flex: 1 1 220px;
+    min-width: 180px;
+    padding: 7px 12px;
+    border-radius: var(--r);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.82rem;
+    font-family: inherit;
+  }
+#pm-root .pm-search::placeholder { color: var(--muted); }
+#pm-root .pm-search:focus { outline: none; border-color: var(--accent); }
+#pm-root .pm-sort {
+    padding: 7px 10px;
+    border-radius: var(--r);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.8rem;
+    font-family: inherit;
+    cursor: pointer;
+  }
+#pm-root .pm-sort:focus { outline: none; border-color: var(--accent); }
+
+  /* ── Card incompatível (minAppVersion) ── */
+#pm-root .card.incompatible { border-color: var(--yellow); border-style: dashed; }
+#pm-root .badge-minapp {
+    font-size: 0.72rem;
+    color: var(--yellow);
+    font-family: var(--mono);
+  }
+
+  /* ── Changelog no card ── */
+#pm-root .card-changelog {
+    font-size: 0.76rem;
+    color: var(--muted);
+    line-height: 1.5;
+    white-space: pre-line;
+    border-top: 1px dashed var(--border);
+    padding-top: 6px;
+  }
+
+  /* ── Painel de entradas inválidas ── */
+#pm-root .invalid-panel {
+    border: 1px dashed var(--red);
+    border-radius: var(--r);
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    font-size: 0.78rem;
+    color: var(--muted);
+    background: var(--surface);
+    line-height: 1.6;
+  }
+#pm-root .invalid-panel strong { color: var(--red); }
+#pm-root .invalid-panel ul { margin: 6px 0 0; padding-left: 18px; }
+#pm-root .invalid-panel code { font-family: var(--mono); color: var(--yellow); }
+
+  /* ── Modal de confirmação de instalação ── */
+#pm-root .pm-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 20px;
+  }
+#pm-root .pm-modal-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    max-width: 460px;
+    width: 100%;
+    padding: 18px 20px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+  }
+#pm-root .pm-modal-title { font-size: 1rem; font-weight: 700; margin-bottom: 10px; }
+#pm-root .pm-modal-body { font-size: 0.85rem; line-height: 1.6; }
+#pm-root .pm-modal-body .kv { display: flex; gap: 8px; font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+#pm-root .pm-modal-body .kv b { color: var(--text); font-weight: 600; }
+#pm-root .pm-modal-warn {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--yellow);
+    border-radius: var(--r);
+    color: var(--yellow);
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+#pm-root .pm-modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+#pm-root .pm-modal-actions .btn-cancel {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+#pm-root .pm-modal-actions .btn-cancel:hover { color: var(--text); border-color: var(--accent); }
 `;
 
 try {
@@ -368,9 +474,24 @@ $root.html(`
   <span id="source-ts"></span>
 </div>
 
+<div id="pm-toolbar" class="toolbar" style="display:none">
+  <input id="pm-search" class="pm-search" type="search" autocomplete="off"
+         placeholder="Buscar por nome, autor, descrição ou tag…">
+  <select id="pm-sort" class="pm-sort">
+    <option value="registry">Ordem do registry</option>
+    <option value="name">Nome (A–Z)</option>
+    <option value="update">Atualizações primeiro</option>
+    <option value="installed">Instalados primeiro</option>
+  </select>
+</div>
+
+<div id="invalid-panel" class="invalid-panel" style="display:none"></div>
+
 <div id="content">
   <div class="state-center"><div class="icon">⏳</div><p>Carregando registry...</p></div>
 </div>
+
+<div id="pm-modal" class="pm-modal" style="display:none"></div>
 
 </div>
 `);
@@ -395,6 +516,8 @@ let installedMap = new Map();
 let pluginsMap = {};
 let activeCategory = 'all';
 let allPlugins = [];
+let searchQuery = '';
+let sortMode = 'registry';
 
 const CATEGORIES = [
   { id: 'all',      label: 'Todos' },
@@ -468,7 +591,8 @@ async function init() {
         source,
         fetchError,
         fetchedAt,
-        serverOrigin: registryNote.getAttribute('label', 'serverOrigin')?.value || null
+        serverOrigin: registryNote.getAttribute('label', 'serverOrigin')?.value || null,
+        appVersion: (() => { try { return api.getAppInfo().appVersion; } catch { return null; } })()
       };
     }, []);
 
@@ -476,7 +600,8 @@ async function init() {
       etapiToken:      data.etapiToken,
       port:            data.port,
       installedNoteId: data.installedNoteId,
-      serverOrigin:    data.serverOrigin || window.location.origin
+      serverOrigin:    data.serverOrigin || window.location.origin,
+      appVersion:      data.appVersion || null
     };
     installedMap = new Map(Object.entries(data.installedVersions));
 
@@ -485,26 +610,31 @@ async function init() {
       setBanner('Token ETAPI não configurado. Instalação via sourceUrl funciona sem ele, mas scripts/widgets zipUrl exigem token em Options > ETAPI.', 'warn');
     }
 
-    // Parse plugins para contar updates antes do banner
     let plugins = [];
     try { plugins = JSON.parse(data.registry).plugins || []; }
     catch { setBanner('Erro ao parsear o JSON do registry.', 'error'); return; }
+
+    const validation = validateRegistry(plugins);
+    renderInvalidNotice(validation.invalid);
+    plugins = validation.valid;
 
     const updateCount = plugins.filter(p =>
       installedMap.has(p.id) && semverGt(p.version, installedMap.get(p.id))
     ).length;
 
-    const updateNote = updateCount > 0 ? ` · 🔔 ${updateCount} update(s) disponível(is)` : '';
+    const updateNote  = updateCount > 0 ? ` · 🔔 ${updateCount} update(s) disponível(is)` : '';
+    const invalidNote = validation.invalid.length > 0 ? ` · ⚠ ${validation.invalid.length} entrada(s) inválida(s)` : '';
     setBanner(
-      `Conectado · porta ${CFG.port} · ${installedMap.size} script(s)/widget(s) instalado(s)${updateNote}`,
-      updateCount > 0 ? 'warn' : 'ok'
+      `Conectado · porta ${CFG.port} · ${installedMap.size} script(s)/widget(s) instalado(s)${updateNote}${invalidNote}`,
+      (updateCount > 0 || validation.invalid.length > 0) ? 'warn' : 'ok'
     );
 
     setSourcePill(data.source, data.registryUrl, data.fetchedAt, data.fetchError);
     allPlugins = plugins;
     activeCategory = 'all';
+    $root.find('#pm-toolbar').css('display', 'flex');
     renderCategoryBar();
-    renderPlugins(plugins);
+    applyView();
 
   } catch (err) {
     setBanner('Erro: ' + err.message, 'error');
@@ -567,7 +697,8 @@ function renderCategoryBar() {
   }
   html += '</div>';
   const existing = $root.find('#cat-bar');
-  if (existing.length) existing.replaceWith(html); else $root.find('#source-bar').after(html);
+  if (existing.length) existing.replaceWith(html);
+  else $root.find('#pm-toolbar').after(html);
 }
 
 function filterByCategory(plugins) {
@@ -575,19 +706,54 @@ function filterByCategory(plugins) {
   return plugins.filter(p => getPluginCategory(p) === activeCategory);
 }
 
+function filterByQuery(plugins) {
+  const q = searchQuery.trim().toLowerCase();
+  if (!q) return plugins;
+  return plugins.filter(p => {
+    const haystack = [p.name, p.author, p.description, (p.tags || []).join(' ')]
+      .filter(Boolean).join(' ').toLowerCase();
+    return haystack.includes(q);
+  });
+}
+
+function sortList(plugins) {
+  const list = plugins.slice();
+  switch (sortMode) {
+    case 'name':
+      return list.sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+    case 'update':
+      return list.sort((a, b) => {
+        const ua = installedMap.has(a.id) && semverGt(a.version, installedMap.get(a.id)) ? 1 : 0;
+        const ub = installedMap.has(b.id) && semverGt(b.version, installedMap.get(b.id)) ? 1 : 0;
+        return ub - ua;
+      });
+    case 'installed':
+      return list.sort((a, b) => (installedMap.has(b.id) ? 1 : 0) - (installedMap.has(a.id) ? 1 : 0));
+    default:
+      return list;   // ordem do registry
+  }
+}
+
+function applyView() {
+  renderPlugins(sortList(filterByQuery(filterByCategory(allPlugins))));
+}
+
 function renderPlugins(plugins) {
   pluginsMap = {};
   for (const p of plugins) pluginsMap[p.id] = p;
-  const filtered = filterByCategory(plugins);
-  if (!filtered.length) {
+  if (!plugins.length) {
+    const msg = searchQuery.trim()
+      ? `Nada encontrado para <code>${escHtml(searchQuery.trim())}</code>.`
+      : (activeCategory !== 'all'
+          ? 'Nenhum script/widget nesta categoria.'
+          : 'Edite a nota <code>#pluginRegistry</code> para adicionar scripts/widgets.');
     setContent(`<div class="state-center">
       <div class="icon">📭</div>
-      <p>Nenhum script/widget nesta categoria.<br>
-      ${activeCategory !== 'all' ? 'Tente outra categoria.' : 'Edite a nota <code>#pluginRegistry</code> para adicionar scripts/widgets.'}</p>
+      <p>${msg}</p>
     </div>`);
     return;
   }
-  setContent('<div class="grid">' + filtered.map(p => cardHTML(p)).join('') + '</div>');
+  setContent('<div class="grid">' + plugins.map(p => cardHTML(p)).join('') + '</div>');
 }
 
 function cardHTML(p) {
@@ -597,6 +763,7 @@ function cardHTML(p) {
   const hasSourceUrl = !!p.sourceUrl || !!p.manifestUrl;
   const btnLabel     = hasSourceUrl ? 'Instalar' : 'Baixar ZIP';
   const btnClass     = hasSourceUrl ? 'btn-install' : 'btn-download';
+  const incompatible = isIncompatible(p);
 
   const tagsHtml = (p.tags || []).map(t => `<span class="tag">${escHtml(t)}</span>`).join('');
   const hasHowto = !!p.homepage;
@@ -608,7 +775,18 @@ function cardHTML(p) {
   let cardClass  = 'card';
   let footerHtml = '';
 
-  if (!isInstalled) {
+  if (incompatible) {
+    cardClass  = 'card incompatible';
+    const installBtn = isInstalled
+      ? `<button class="btn btn-reinstall" data-plugin-id="${escHtml(p.id)}" disabled>↺</button>`
+      : `<button class="btn ${btnClass}" data-plugin-id="${escHtml(p.id)}" disabled>${btnLabel}</button>`;
+    const uninstallBtn = isInstalled
+      ? `<button class="btn btn-uninstall" data-plugin-id="${escHtml(p.id)}">✕</button>`
+      : '';
+    footerHtml = `${howtoHtml}
+      <span class="badge-minapp">requer Trilium ≥ ${escHtml(p.minAppVersion)} (app ${escHtml(CFG.appVersion)})</span>
+      <div style="display:flex;gap:6px">${installBtn}${uninstallBtn}</div>`;
+  } else if (!isInstalled) {
     cardClass  = 'card';
     footerHtml = `${howtoHtml}
       <span></span>
@@ -639,6 +817,7 @@ function cardHTML(p) {
       </div>
       <div class="card-author">por ${escHtml(p.author || '—')}</div>
       <div class="card-desc">${escHtml(p.description || '')}</div>
+      ${p.changelog ? `<div class="card-changelog">${escHtml(p.changelog)}</div>` : ''}
       ${tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : ''}
       <div class="card-footer">${footerHtml}</div>
     </div>`;
@@ -648,17 +827,81 @@ function cardHTML(p) {
 // Nota: esta função é definida dentro dos callbacks backend,
 // mas precisamos dela em múltiplos lugares. Vamos manter inline.
 
+// ── SEGURANÇA / CONFIRMAÇÃO ──────────────────────────────────────
+const ALLOWED_HOSTS = [
+  'raw.githubusercontent.com',
+  'github.com',
+  'codeload.github.com',
+  'objects.githubusercontent.com',
+];
+
+function assertAllowedUrl(url) {
+  let u;
+  try { u = new URL(String(url)); }
+  catch { throw new Error('URL inválida: ' + url); }
+  if (u.protocol !== 'https:') throw new Error('URL não-HTTPS bloqueada: ' + url);
+  if (!ALLOWED_HOSTS.includes(u.hostname)) throw new Error('Host não permitido: ' + u.hostname);
+  return url;
+}
+
+function installWarningHtml(p) {
+  const kind = p.manifestUrl ? 'manifesto (várias notas)'
+    : p.sourceUrl ? 'código-fonte (1 nota)'
+    : 'ZIP (importação manual)';
+  const url = p.manifestUrl || p.sourceUrl || p.zipUrl || '';
+  let host = url;
+  try { host = new URL(url).hostname; } catch {}
+  return `
+    <div class="pm-modal-title">Instalar ${escHtml(p.name)} v${escHtml(p.version)}?</div>
+    <div class="pm-modal-body">
+      <div class="kv"><b>Autor</b><span>${escHtml(p.author || '—')}</span></div>
+      <div class="kv"><b>Tipo</b><span>${escHtml(kind)}</span></div>
+      <div class="kv"><b>Origem</b><span>${escHtml(host)}</span></div>
+      <div class="pm-modal-warn">
+        Este conteúdo roda com acesso total à API do Trilium — pode ler e alterar
+        notas e arquivos e acessar a rede. Instale apenas de fontes em que você confia.
+      </div>
+    </div>
+    <div class="pm-modal-actions">
+      <button class="btn btn-cancel">Cancelar</button>
+      <button class="btn btn-install">Instalar</button>
+    </div>`;
+}
+
+function confirmInstall(p) {
+  return new Promise((resolve) => {
+    const $modal = $root.find('#pm-modal');
+    $modal.html(`<div class="pm-modal-box">${installWarningHtml(p)}</div>`).css('display', 'flex');
+    const close = (result) => { $modal.hide().empty(); resolve(result); };
+    $modal.find('.btn-cancel').one('click', () => close(false));
+    $modal.find('.btn-install').one('click', () => close(true));
+  });
+}
+
 // ── INSTALL ──────────────────────────────────────────────────────
 async function installPlugin(p, btn) {
   if (!btn) btn = $root.find(`[data-plugin-id="${p.id}"]`).first();
+
+  const confirmed = await confirmInstall(p);
+  if (!confirmed) return;
+
   if (btn.length) { btn.prop('disabled', true); btn.html('<span class="spinner"></span>Instalando...'); }
 
   try {
     if (p.manifestUrl) {
+      assertAllowedUrl(p.manifestUrl);
       // ── Fluxo manifestUrl: baixa manifest + cria múltiplas notas ──
       btn.html('<span class="spinner"></span>Instalando...');
       const result = await api.runAsyncOnBackendWithManualTransactionHandling(
         async (manifestUrl, parentNoteId, pluginId, pluginVersion, pluginName) => {
+          function assertAllowedUrl(url) {
+            const u = new URL(url);
+            if (u.protocol !== 'https:') throw new Error('URL não-HTTPS bloqueada: ' + url);
+            if (!['raw.githubusercontent.com', 'github.com', 'codeload.github.com', 'objects.githubusercontent.com'].includes(u.hostname)) {
+              throw new Error('Host não permitido: ' + u.hostname);
+            }
+          }
+
           function httpGet(url, depth) {
             // fetch é o caminho permitido no sandbox de scripts (0.105+ bloqueia require('https'))
             if ((depth || 0) > 5) return Promise.reject(new Error('Muitos redirects'));
@@ -677,6 +920,7 @@ async function installPlugin(p, btn) {
           }
 
           // 1. Baixa o manifest
+          assertAllowedUrl(manifestUrl);
           const manifestRaw = await httpGet(manifestUrl);
           let manifest;
           try { manifest = JSON.parse(manifestRaw.toString('utf-8')); }
@@ -693,6 +937,7 @@ async function installPlugin(p, btn) {
             let content = def.content || '';
             if (def.sourceUrl) {
               const srcUrl = def.sourceUrl.match(/^https?:\/\//) ? def.sourceUrl : baseUrl + def.sourceUrl;
+              assertAllowedUrl(srcUrl);
               const srcBuf = await httpGet(srcUrl);
               content = srcBuf.toString('utf-8');
             }
@@ -760,10 +1005,19 @@ async function installPlugin(p, btn) {
       showToast(`✓ ${p.name} v${p.version} instalado!`, 'ok');
 
     } else if (p.sourceUrl) {
+      assertAllowedUrl(p.sourceUrl);
       // ── Fluxo sourceUrl: baixa o .js/.jsx e cria nota code diretamente ──
       btn.html('<span class="spinner"></span>Baixando...');
       const result = await api.runAsyncOnBackendWithManualTransactionHandling(
         async (sourceUrl, parentNoteId, pluginId, pluginVersion, pluginName, labels) => {
+          function assertAllowedUrl(url) {
+            const u = new URL(url);
+            if (u.protocol !== 'https:') throw new Error('URL não-HTTPS bloqueada: ' + url);
+            if (!['raw.githubusercontent.com', 'github.com', 'codeload.github.com', 'objects.githubusercontent.com'].includes(u.hostname)) {
+              throw new Error('Host não permitido: ' + u.hostname);
+            }
+          }
+
           function httpGet(url, depth) {
             // fetch é o caminho permitido no sandbox de scripts (0.105+ bloqueia require('https'))
             if ((depth || 0) > 5) return Promise.reject(new Error('Muitos redirects'));
@@ -780,6 +1034,7 @@ async function installPlugin(p, btn) {
               })
               .finally(() => clearTimeout(timer));
           }
+          assertAllowedUrl(sourceUrl);
           const buf = await httpGet(sourceUrl);
           if (!buf.length) throw new Error('Source vazio: ' + sourceUrl);
           const source = buf.toString('utf-8');
@@ -809,6 +1064,7 @@ async function installPlugin(p, btn) {
       showToast(`✓ ${p.name} v${p.version} instalado!`, 'ok');
 
     } else if (p.zipUrl) {
+      assertAllowedUrl(p.zipUrl);
       // ── Fluxo zipUrl: download do ZIP para o usuário instalar manualmente ──
       const a = document.createElement('a');
       a.href = p.zipUrl;
@@ -824,18 +1080,7 @@ async function installPlugin(p, btn) {
       throw new Error('Script/Widget sem manifestUrl, sourceUrl ou zipUrl');
     }
 
-    // Atualiza o card para estado "instalado"
-    const card = $root.find('#card-' + p.id);
-    if (card.length) {
-      card.attr('class', 'card is-installed');
-      card.find('.card-footer').html(
-        `<span class="badge-ok">✓ v${escHtml(p.version)}</span>
-         <div style="display:flex;gap:6px">
-           <button class="btn btn-reinstall" data-plugin-id="${escHtml(p.id)}">↺</button>
-           <button class="btn btn-uninstall" data-plugin-id="${escHtml(p.id)}">✕</button>
-         </div>`
-      );
-    }
+    applyView();
 
   } catch (err) {
     showToast(`✗ ${p.name}: ${err.message || err || 'Erro desconhecido'}`, 'error');
@@ -866,16 +1111,7 @@ async function uninstallPlugin(p, btn) {
     installedMap.delete(p.id);
     showToast(`🗑 ${p.name} removido.`, 'ok');
 
-    // Volta o card ao estado "não instalado"
-    const card = $root.find('#card-' + p.id);
-    if (card.length) {
-      const hasSrc = !!p.sourceUrl || !!p.manifestUrl;
-      card.attr('class', 'card');
-      card.find('.card-footer').html(
-        `<span></span>
-         <button class="btn ${hasSrc ? 'btn-install' : 'btn-download'}" data-plugin-id="${escHtml(p.id)}">${hasSrc ? 'Instalar' : 'Baixar ZIP'}</button>`
-      );
-    }
+    applyView();
 
   } catch (err) {
     showToast(`✗ ${err.message || err || 'Erro desconhecido'}`, 'error');
@@ -885,13 +1121,83 @@ async function uninstallPlugin(p, btn) {
 }
 
 // ── UTILS ────────────────────────────────────────────────────────
+function semverParse(v) {
+  const m = String(v || '0').trim().match(/^(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:[-+](.*))?$/);
+  return m
+    ? { major: +m[1], minor: +(m[2] || 0), patch: +(m[3] || 0), pre: m[4] || null }
+    : { major: 0, minor: 0, patch: 0, pre: null };
+}
+
 function semverGt(a, b) {
-  const parse = v => String(v || '0').split('.').map(n => parseInt(n) || 0);
-  const [a1, a2, a3] = parse(a);
-  const [b1, b2, b3] = parse(b);
-  if (a1 !== b1) return a1 > b1;
-  if (a2 !== b2) return a2 > b2;
-  return a3 > b3;
+  const x = semverParse(a), y = semverParse(b);
+  if (x.major !== y.major) return x.major > y.major;
+  if (x.minor !== y.minor) return x.minor > y.minor;
+  if (x.patch !== y.patch) return x.patch > y.patch;
+  if (x.pre === y.pre) return false;
+  if (x.pre === null) return true;
+  if (y.pre === null) return false;
+  return x.pre > y.pre;
+}
+
+function isSemver(v) {
+  return typeof v === 'string' && /^\d+\.\d+\.\d+(?:[-+].+)?$/.test(v.trim());
+}
+
+function isIncompatible(p) {
+  if (!p || !p.minAppVersion || !CFG.appVersion) return false;
+  return semverGt(p.minAppVersion, CFG.appVersion);
+}
+
+function validateRegistry(plugins) {
+  const valid = [];
+  const invalid = [];
+  const seen = new Set();
+
+  for (const p of plugins) {
+    const errors = [];
+    if (!p || typeof p !== 'object') {
+      invalid.push({ id: '(sem id)', errors: ['entrada não é um objeto'] });
+      continue;
+    }
+    const id = p.id;
+    if (!id || typeof id !== 'string') errors.push('id ausente');
+    else if (seen.has(id)) errors.push('id duplicado: ' + id);
+    else seen.add(id);
+
+    if (!p.name || typeof p.name !== 'string') errors.push('name ausente');
+    if (!isSemver(p.version)) errors.push('version inválida (esperado x.y.z): ' + (p.version ?? '—'));
+
+    const urls = ['sourceUrl', 'manifestUrl', 'zipUrl'].filter(k => p[k]);
+    if (!urls.length) errors.push('nenhuma URL (sourceUrl/manifestUrl/zipUrl)');
+    for (const k of urls) {
+      if (!/^https?:\/\//.test(String(p[k]))) errors.push(k + ' não é http(s)');
+    }
+    for (const k of ['sourceUrl', 'manifestUrl']) {
+      if (p[k] && !/^https:\/\/raw\.githubusercontent\.com\//.test(String(p[k]))) {
+        errors.push(k + ' deve usar raw.githubusercontent.com');
+      }
+    }
+    if (p.tags !== undefined && !Array.isArray(p.tags)) errors.push('tags deve ser um array');
+    if (p.labels !== undefined && !Array.isArray(p.labels)) errors.push('labels deve ser um array');
+    if (p.minAppVersion !== undefined && !isSemver(p.minAppVersion)) {
+      errors.push('minAppVersion inválida (esperado x.y.z): ' + p.minAppVersion);
+    }
+
+    if (errors.length) invalid.push({ id: id || '(sem id)', errors });
+    else valid.push(p);
+  }
+  return { valid, invalid };
+}
+
+function renderInvalidNotice(invalid) {
+  const panel = $root.find('#invalid-panel');
+  if (!invalid || !invalid.length) { panel.hide().empty(); return; }
+  const items = invalid.map(it =>
+    `<li><code>${escHtml(it.id)}</code> — ${it.errors.map(escHtml).join('; ')}</li>`
+  ).join('');
+  panel.html(
+    `<strong>⚠ ${invalid.length} entrada(s) do registry foram ignoradas</strong> (schema inválido):<ul>${items}</ul>`
+  ).show();
 }
 
 function setBanner(msg, type) {
@@ -941,7 +1247,17 @@ $root.on('click', '.btn-howto', function(e) {
 $root.on('click', '.cat-pill', function(e) {
   activeCategory = $(this).data('cat');
   renderCategoryBar();
-  renderPlugins(allPlugins);
+  applyView();
+});
+
+$root.on('input', '#pm-search', function() {
+  searchQuery = String($(this).val() || '');
+  applyView();
+});
+
+$root.on('change', '#pm-sort', function() {
+  sortMode = String($(this).val() || 'registry');
+  applyView();
 });
 
 // ── START ─────────────────────────────────────────────────────────
