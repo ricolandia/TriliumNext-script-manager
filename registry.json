@@ -214,7 +214,7 @@
       "id": "kanboard-integration",
       "name": "Kanboard Integration",
       "description": "Kanboard integration via JSON-RPC API. Syncs projects, columns and tasks.",
-      "version": "0.8.0",
+      "version": "0.8.1",
       "minAppVersion": "0.106.0",
       "author": "ricolandia",
       "homepage": "https://github.com/ricolandia/TriliumNext-Toolkit/tree/main/Kanboard-Integration",
