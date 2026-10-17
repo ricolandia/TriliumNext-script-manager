@@ -69,8 +69,8 @@
     {
       "id": "canvas-templates-for-production",
       "name": "Canvas Templates For Production",
-      "description": "A collection of Excalidraw templates for productivity, learning, and creativity. Ideal for use with Canvas Note Tools (Insert template).",
-      "version": "0.8.0",
+      "description": "13 Excalidraw templates for productivity, learning, creativity and storytelling (OKR, GTD, Cornell, Feynman, Storyboard, Character Arc, Plot Timeline…). WCAG AA contrast, PT-BR. Ideal for use with Canvas Note Tools (Insert template).",
+      "version": "0.8.1",
       "minAppVersion": "0.106.0",
       "author": "ricolandia",
       "homepage": "https://github.com/ricolandia/TriliumNext-Toolkit",
