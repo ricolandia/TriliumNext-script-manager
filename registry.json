@@ -43,9 +43,9 @@
       "id": "canvas-note-tools",
       "name": "Canvas Note Tools",
       "description": "Canvas toolkit for TriliumNext: note cards with in-place editing, relation types per arrow, longform synthesis, layered flowcharts from a text DSL (no arrows), #canvasTemplate insertion and built-in help. UI follows Trilium's language (PT/EN).",
-      "version": "0.9.0",
+      "version": "0.9.1",
       "minAppVersion": "0.106.0",
-      "changelog": "Rótulo da seta corrigido, groupIds remapeado no clone de template, JSON corrompido nunca é sobrescrito, editor com role=dialog + Esc, confirmações em 2 toques, launcher mobile com ARIA.",
+      "changelog": "Insert template: z-order agora começa depois do maior index já existente no canvas (antes reiniciava em a00 e duas inserções davam índices repetidos) e, em canvas vazio, o fundo/grid/zoom do template é adotado. Coberto por test-insert-template.js (27 asserções).",
       "author": "ricolandia",
       "homepage": "https://github.com/ricolandia/TriliumNext-Toolkit/tree/main/Canvas-Note-Tools",
       "tags": [
