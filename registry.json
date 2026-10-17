@@ -70,8 +70,9 @@
       "id": "canvas-templates-for-production",
       "name": "Canvas Templates For Production",
       "description": "13 Excalidraw templates for productivity, learning, creativity and storytelling (OKR, GTD, Cornell, Feynman, Storyboard, Character Arc, Plot Timeline…). WCAG AA contrast, PT-BR. Ideal for use with Canvas Note Tools (Insert template).",
-      "version": "0.8.1",
+      "version": "0.8.2",
       "minAppVersion": "0.106.0",
+      "changelog": "Piso de texto em 12px (143 rótulos; 7 exceções medidas a 11px), raio de canto unificado por template, caixas ⬜→☐, 6 rótulos do storyboard recentrados; contraste WCAG AA e previews/SVGs regerados na rodada 15.",
       "author": "ricolandia",
       "homepage": "https://github.com/ricolandia/TriliumNext-Toolkit",
       "tags": [
