@@ -252,9 +252,9 @@
       "id": "daily-note-navigator",
       "name": "Daily Note Navigator",
       "description": "Right-pane widget to navigate daily journal notes (days and month jumps) with read-only navigation and an explicit create note action.",
-      "version": "0.10.0",
+      "version": "0.10.1",
       "minAppVersion": "0.106.0",
-      "changelog": "Voltar nunca trava: cai no dia mais próximo anterior (com aviso do pulo) e os meses seguem a mesma regra; avançar nunca passa de hoje (botões de dia/mês desabilitados no dia atual). Testes: cenários de fallback, sem-anterior, hoje e mês no smoke (Chrome headless).",
+      "changelog": "Buraco de data não trava em nenhuma direção: voltar cai no dia anterior mais próximo e avançar cai no próximo existente, sempre parando em hoje (com aviso do pulo e sem oferecer criar nota no salto). Testes: cenários de fallback para os dois lados e limite de hoje.",
       "author": "ricolandia",
       "homepage": "https://github.com/ricolandia/TriliumNext-Toolkit/tree/main/Daily-Note-Navigator",
       "tags": [
